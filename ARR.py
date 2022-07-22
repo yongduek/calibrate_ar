@@ -122,11 +122,15 @@ class AR_render:
     def draw_scene(self):
         self.frameCounter += 1
         if 10:
-            flippedImage = cv2.flip(self.image, 0)
-            flippedImage[100:200, 300:500] = [200, 10, 10]
-            glDisable(GL_DEPTH_TEST)
-            glDrawPixels(flippedImage.shape[1], flippedImage.shape[0], GL_BGR, GL_UNSIGNED_BYTE, flippedImage.data)
-            glEnable(GL_DEPTH_TEST)
+            flippedImage = cv2.flip(self.image, 0)  # upside down
+        else:
+            flippedImage = self.image.copy() 
+            
+        flippedImage[100:200, 300:500] = [200, 10, 10]
+
+        glDisable(GL_DEPTH_TEST)
+        glDrawPixels(flippedImage.shape[1], flippedImage.shape[0], GL_BGR, GL_UNSIGNED_BYTE, flippedImage.data)
+        glEnable(GL_DEPTH_TEST)
 
         glViewport(0, 0, self.image_w, self.image_h)
 
@@ -149,7 +153,11 @@ class AR_render:
         width = self.image_w
         height = self.image_h
 
-        glFrustum(-principalX / fx, (width - principalX) / fy, (principalY - height) / fy, principalY / fy, near, far)
+        if 10:
+            # due to OpenGL's coordinate system, we need to swap bottom and top
+            glFrustum(-principalX / fx, (width - principalX) / fy, (principalY - height) / fy, principalY / fy, near, far)
+        else:
+            glFrustum(-principalX / fx, (width - principalX) / fy, -principalY / fy, (height - principalY) / fy, near, far)
 
         # projectMatrix = intrinsic2Project(self.cam_matrix, self.image_w, self.image_h, 0.01, 100.0)
         # glMultMatrixf(projectMatrix)
@@ -176,12 +184,31 @@ class AR_render:
         glEnd()
         glColor3f(1, 1, 1)
         # --------------------            
-            
+        
+        glTranslatef(5, 4, 0)
+        glRotatef(self.frameCounter % 360, 1, 0, 0)
+        glLineWidth(2)
+        glBegin(GL_LINES)
+        glColor3f(1, 0, 0)
+        glVertex3f(0.,0, 0)
+        glVertex3f(5.,0, 0)
+        glColor3f(0, 1, 0)
+        glVertex3f(0, 0, 0)
+        glVertex3f(0, 5, 0)
+        glColor3f(0.2, 0.2, 1)
+        glVertex3f(0, 0, 0)
+        glVertex3f(0, 0, 5)
+        glEnd()
+        glColor3f(1, 1, 1)
+        # --------------------            
+                
+
+
         cv2.imshow("Frame", self.image)
         ch = cv2.waitKey(20)
         # print(int(ch))
         if ch == 32: exit()
-        print(f"draw_objects({self.frameCounter}) done.")
+        # print(f"draw_objects({self.frameCounter}) done.")
 
     def keyBoardListener(self, key, x, y):
         """[Use key board to adjust model size and position]
